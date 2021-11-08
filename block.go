@@ -56,8 +56,7 @@ func (b *mathJaxBlockParser) Continue(node ast.Node, reader text.Reader, pc pars
 			return parser.Close
 		}
 	}
-
-	pos, padding := util.DedentPosition(line, 0, data.indent)
+	pos, padding := DedentPosition(line, data.indent)
 	seg := text.NewSegmentPadding(segment.Start+pos, segment.Stop, padding)
 	node.Lines().Append(seg)
 	reader.AdvanceAndSetPadding(segment.Stop-segment.Start-pos-1, padding)
@@ -78,4 +77,27 @@ func (b *mathJaxBlockParser) CanAcceptIndentedLine() bool {
 
 func (b *mathJaxBlockParser) Trigger() []byte {
 	return nil
+}
+
+func DedentPosition(bs []byte, width int) (pos, padding int) {
+	if width == 0 {
+		return 0, 0
+	}
+	w := 0
+	l := len(bs)
+	i := 0
+	for ; i < l; i++ {
+		if bs[i] == '\t' {
+			//w = (w/4+1)*4
+			w += 4 - w%4
+		} else if bs[i] == ' ' {
+			w++
+		} else {
+			break
+		}
+	}
+	if w >= width {
+		return i, w - width
+	}
+	return i, 0
 }
